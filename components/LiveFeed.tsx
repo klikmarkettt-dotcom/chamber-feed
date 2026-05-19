@@ -7,6 +7,7 @@ export interface FeedItem {
   itemEmoji: string
   price: number
   trustBoost: number
+  grantTrust: boolean
   signature?: string
   when: number
 }
@@ -19,38 +20,71 @@ function timeAgo(ts: number) {
 }
 
 export function LiveFeed({ events }: { events: FeedItem[] }) {
-  if (!events.length) return (
-    <p style={{ color: 'var(--dimmer)', fontSize: 11, textAlign: 'center', padding: '16px 0', fontStyle: 'italic' }}>
-      no feeds yet — be the first 🦞
-    </p>
-  )
+  if (!events.length) {
+    return (
+      <p
+        style={{
+          color: 'var(--dimmer)',
+          fontSize: 11,
+          textAlign: 'center',
+          padding: '16px 0',
+          fontStyle: 'italic',
+        }}
+      >
+        no feeds yet — be the first 🦞
+      </p>
+    )
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
       {events.slice(0, 8).map((ev) => (
-        <div key={ev.id} style={{
-          display: 'grid',
-          gridTemplateColumns: '28px 1fr auto',
-          alignItems: 'center',
-          gap: 8,
-          padding: '6px 10px',
-          border: '1px solid var(--border)',
-          borderRadius: 4,
-          background: 'rgba(0,0,0,0.2)',
-          animation: 'slideUp 0.3s ease-out',
-        }}>
+        <div
+          key={ev.id}
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '28px 1fr auto',
+            alignItems: 'center',
+            gap: 8,
+            padding: '6px 10px',
+            border: '1px solid var(--border)',
+            borderRadius: 4,
+            background: 'rgba(0,0,0,0.2)',
+            animation: 'slideUp 0.3s ease-out',
+          }}
+        >
           <span style={{ fontSize: 18, textAlign: 'center' }}>{ev.itemEmoji}</span>
+
           <div>
-            <div style={{ color: 'var(--text)', fontSize: 11, fontWeight: 500 }}>{ev.itemName}</div>
+            <div style={{ color: 'var(--text)', fontSize: 11, fontWeight: 500 }}>
+              {ev.itemName}
+            </div>
             <div style={{ color: 'var(--dimmer)', fontSize: 10, fontFamily: 'monospace' }}>
-              {ev.wallet.slice(0, 4)}…{ev.wallet.slice(-4)}
+              {ev.wallet.slice(0, 4)}…{ev.wallet.slice(-4)} ·{' '}
+              {ev.grantTrust ? `trust +${ev.trustBoost}` : 'feed only'}
             </div>
           </div>
+
           <div style={{ textAlign: 'right' }}>
-            <div style={{ color: 'var(--green)', fontSize: 10, fontWeight: 600 }}>+{ev.trustBoost}pt</div>
+            <div
+              style={{
+                color: ev.grantTrust ? 'var(--green)' : 'var(--accent)',
+                fontSize: 10,
+                fontWeight: 600,
+              }}
+            >
+              {ev.grantTrust ? `+${ev.trustBoost}pt` : 'no trust'}
+            </div>
             <div style={{ color: 'var(--dimmer)', fontSize: 9 }}>{timeAgo(ev.when)}</div>
             {ev.signature && (
-              <a href={`https://solscan.io/tx/${ev.signature}`} target="_blank" rel="noreferrer"
-                style={{ color: 'var(--dimmer)', fontSize: 9, textDecoration: 'none' }}>↗</a>
+              <a
+                href={`https://solscan.io/tx/${ev.signature}`}
+                target="_blank"
+                rel="noreferrer"
+                style={{ color: 'var(--dimmer)', fontSize: 9, textDecoration: 'none' }}
+              >
+                ↗
+              </a>
             )}
           </div>
         </div>
