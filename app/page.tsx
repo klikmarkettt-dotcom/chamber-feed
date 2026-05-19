@@ -1,28 +1,34 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState, type ComponentType } from 'react'
-import { useWallet, WalletMultiButton as RawWalletMultiButton } from '@solana/wallet-adapter-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+
+import { useWallet } from '@solana/wallet-adapter-react'
+import { WalletMultiButton as RawWalletMultiButton } from '@solana/wallet-adapter-react-ui'
+
+const WalletMultiButton: any = RawWalletMultiButton
+
 import { LobsterSVG } from '@/components/LobsterSVG'
 import { ShopItemCard } from '@/components/ShopItem'
 import { BuyModal } from '@/components/BuyModal'
 import { TrustBadge } from '@/components/TrustBadge'
 import { LiveFeed, type FeedItem } from '@/components/LiveFeed'
+
 import {
   ChamberStatsPanel,
   ChamberLeaderboard,
   ChamberLiveFeed,
 } from '@/components/ChamberStatsPanel'
+
 import { useTrustScore } from '@/hooks/useTrustScore'
 import { useSolanaPayment } from '@/hooks/useSolanaPayment'
 import { useChamberStats } from '@/hooks/useChamberStats'
+
 import {
   SHOP_ITEMS,
   type ShopItem,
   type LobsterReaction,
   TRUST_LEVELS,
 } from '@/lib/items'
-
-const WalletMultiButton = RawWalletMultiButton as unknown as ComponentType<any>
 
 interface Toast {
   id: number
@@ -33,32 +39,61 @@ interface Toast {
 
 export default function Page() {
   const { publicKey } = useWallet()
+
   const wallet = publicKey?.toBase58() ?? null
 
-  const { stats, loading: statsLoading, error: statsError } = useChamberStats()
+  const {
+    stats,
+    loading: statsLoading,
+    error: statsError,
+  } = useChamberStats()
+
   const { score, addScore, levelUp } = useTrustScore(wallet, stats)
+
   const { pay, loading } = useSolanaPayment()
 
   const [selected, setSelected] = useState<ShopItem | null>(null)
-  const [reaction, setReaction] = useState<LobsterReaction>('idle')
-  const [speech, setSpeech] = useState('Feed me... 🦞')
+
+  const [reaction, setReaction] =
+    useState<LobsterReaction>('idle')
+
+  const [speech, setSpeech] =
+    useState('Feed me... 🦞')
+
   const [toasts, setToasts] = useState<Toast[]>([])
+
   const [feed, setFeed] = useState<FeedItem[]>([])
 
   const tid = useRef(0)
 
-  const toast = useCallback((text: string, type: Toast['type'], href?: string) => {
-    const id = ++tid.current
-    setToasts((p) => [...p, { id, text, type, href }])
+  const toast = useCallback(
+    (
+      text: string,
+      type: Toast['type'],
+      href?: string
+    ) => {
+      const id = ++tid.current
 
-    window.setTimeout(() => {
-      setToasts((p) => p.filter((t) => t.id !== id))
-    }, 5000)
-  }, [])
+      setToasts((p) => [
+        ...p,
+        { id, text, type, href },
+      ])
+
+      setTimeout(() => {
+        setToasts((p) =>
+          p.filter((t) => t.id !== id)
+        )
+      }, 5000)
+    },
+    []
+  )
 
   useEffect(() => {
     if (levelUp) {
-      toast(`🎉 LEVEL UP · ${levelUp}`, 'levelup')
+      toast(
+        `🎉 LEVEL UP · ${levelUp}`,
+        'levelup'
+      )
     }
   }, [levelUp, toast])
 
@@ -73,32 +108,31 @@ export default function Page() {
       'chamber is watching 👁',
     ]
 
-    const iv = window.setInterval(() => {
-      setSpeech(phrases[Math.floor(Math.random() * phrases.length)])
+    const iv = setInterval(() => {
+      setSpeech(
+        phrases[
+          Math.floor(Math.random() * phrases.length)
+        ]
+      )
     }, 4000)
 
-    return () => window.clearInterval(iv)
+    return () => clearInterval(iv)
   }, [reaction])
 
-  async function handleBuy({
-    tip,
-    grantTrust,
-  }: {
-    tip: number
-    grantTrust: boolean
-  }) {
+  async function handleBuy(tip: number) {
     if (!selected) return
 
     try {
-      const result = await pay({ amountSol: selected.price, tipSol: tip })
-      const trustDelta = grantTrust ? selected.trustBoost : 0
+      const result = await pay({
+        amountSol: selected.price,
+        tipSol: tip,
+      })
 
       setReaction(selected.reaction)
+
       setSpeech(selected.speech)
 
-      if (grantTrust) {
-        addScore(selected.trustBoost)
-      }
+      addScore(selected.trustBoost)
 
       if (wallet) {
         setFeed((p) => [
@@ -108,8 +142,7 @@ export default function Page() {
             itemName: selected.name,
             itemEmoji: selected.emoji,
             price: selected.price,
-            trustBoost: trustDelta,
-            grantTrust,
+            trustBoost: selected.trustBoost,
             signature: result.signature,
             when: Date.now(),
           },
@@ -118,18 +151,18 @@ export default function Page() {
       }
 
       toast(
-        grantTrust
-          ? `✓ fed! +${trustDelta} trust earned`
-          : '✓ fed! no trust added',
+        `✓ fed! +${selected.trustBoost} trust earned`,
         'success',
-        result.explorerUrl,
+        result.explorerUrl
       )
 
       setSelected(null)
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : ''
+      const msg =
+        err instanceof Error ? err.message : ''
 
       setReaction('sad')
+
       setSpeech('Oof... 😢')
 
       toast(
@@ -137,10 +170,10 @@ export default function Page() {
           msg.includes('rejected')
             ? 'rejected'
             : msg.includes('funds')
-              ? 'insufficient funds'
-              : 'transaction failed'
+            ? 'insufficient funds'
+            : 'transaction failed'
         }`,
-        'error',
+        'error'
       )
 
       setSelected(null)
@@ -148,7 +181,12 @@ export default function Page() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
+    <div
+      style={{
+        minHeight: '100vh',
+        background: 'var(--bg)',
+      }}
+    >
       <div
         style={{
           position: 'fixed',
@@ -164,36 +202,44 @@ export default function Page() {
         {toasts.map((t) => (
           <div
             key={t.id}
-            onClick={() => setToasts((p) => p.filter((x) => x.id !== t.id))}
+            onClick={() =>
+              setToasts((p) =>
+                p.filter((x) => x.id !== t.id)
+              )
+            }
             style={{
               border: '1px solid',
               borderColor:
                 t.type === 'success'
                   ? 'rgba(74,255,154,0.3)'
                   : t.type === 'levelup'
-                    ? 'rgba(184,123,255,0.4)'
-                    : 'rgba(255,74,110,0.3)',
+                  ? 'rgba(184,123,255,0.4)'
+                  : 'rgba(255,74,110,0.3)',
               borderRadius: 5,
               padding: '8px 12px',
               fontSize: 11,
               cursor: 'pointer',
-              animation: 'slideUp 0.3s ease-out',
+              animation:
+                'slideUp 0.3s ease-out',
               background: 'var(--panel)',
               color:
                 t.type === 'success'
                   ? 'var(--green)'
                   : t.type === 'levelup'
-                    ? 'var(--purple)'
-                    : 'var(--red)',
+                  ? 'var(--purple)'
+                  : 'var(--red)',
             }}
           >
             {t.text}
+
             {t.href && (
               <a
                 href={t.href}
                 target="_blank"
                 rel="noreferrer"
-                onClick={(e) => e.stopPropagation()}
+                onClick={(e) =>
+                  e.stopPropagation()
+                }
                 style={{
                   display: 'block',
                   fontSize: 9,
@@ -214,16 +260,32 @@ export default function Page() {
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '10px 20px',
-          borderBottom: '1px solid var(--border)',
+          borderBottom:
+            '1px solid var(--border)',
           position: 'sticky',
           top: 0,
           zIndex: 30,
-          background: 'rgba(5,6,10,0.97)',
+          background:
+            'rgba(5,6,10,0.97)',
           backdropFilter: 'blur(12px)',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={{ color: 'var(--accent)', fontSize: 14 }}>☿</span>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+          }}
+        >
+          <span
+            style={{
+              color: 'var(--accent)',
+              fontSize: 14,
+            }}
+          >
+            ☿
+          </span>
+
           <div>
             <div
               style={{
@@ -235,40 +297,90 @@ export default function Page() {
             >
               FEED THE LOBSTER
             </div>
-            <div style={{ color: 'var(--dimmer)', fontSize: 9, letterSpacing: '0.08em' }}>
-              · live chamber score
+
+            <div
+              style={{
+                color: 'var(--dimmer)',
+                fontSize: 9,
+                letterSpacing: '0.08em',
+              }}
+            >
+              <a
+                href="https://chamber-stats.vercel.app/"
+                target="_blank"
+                rel="noreferrer"
+                style={{
+                  color: 'inherit',
+                  textDecoration: 'none',
+                }}
+              >
+                · chamber-stats.vercel.app
+              </a>
             </div>
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          {wallet && <TrustBadge score={score} />}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+          }}
+        >
+          {wallet && (
+            <TrustBadge score={score} />
+          )}
+
           <WalletMultiButton />
         </div>
       </header>
 
-      <div style={{ padding: '12px 20px 0', maxWidth: 1180, margin: '0 auto' }}>
-        <ChamberStatsPanel stats={stats} loading={statsLoading} error={statsError} />
+      <div
+        style={{
+          padding: '12px 20px 0',
+          maxWidth: 1100,
+          margin: '0 auto',
+        }}
+      >
+        <ChamberStatsPanel
+          stats={stats}
+          loading={statsLoading}
+          error={statsError}
+        />
       </div>
 
-      <main style={{ maxWidth: 1180, margin: '0 auto', padding: '16px 20px 40px' }}>
+      <main
+        style={{
+          maxWidth: 1100,
+          margin: '0 auto',
+          padding: '16px 20px 40px',
+        }}
+      >
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'minmax(0,280px) minmax(0,1fr) minmax(0,320px)',
+            gridTemplateColumns:
+              'minmax(0,1fr) minmax(0,1fr) minmax(0,1fr)',
             gap: 16,
           }}
         >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 12,
+            }}
+          >
             <div
               style={{
-                border: '1px solid var(--border)',
+                border:
+                  '1px solid var(--border)',
                 borderRadius: 6,
                 background: 'var(--panel)',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                padding: '14px 10px',
+                padding: '20px 12px',
               }}
             >
               <LobsterSVG
@@ -283,7 +395,8 @@ export default function Page() {
 
             <div
               style={{
-                border: '1px solid var(--border)',
+                border:
+                  '1px solid var(--border)',
                 borderRadius: 6,
                 background: 'var(--panel)',
                 overflow: 'hidden',
@@ -292,8 +405,10 @@ export default function Page() {
               <div
                 style={{
                   padding: '8px 14px',
-                  borderBottom: '1px solid var(--border)',
-                  background: 'rgba(0,0,0,0.3)',
+                  borderBottom:
+                    '1px solid var(--border)',
+                  background:
+                    'rgba(0,0,0,0.3)',
                 }}
               >
                 <span
@@ -301,14 +416,19 @@ export default function Page() {
                     color: 'var(--dim)',
                     fontSize: 10,
                     letterSpacing: '0.12em',
-                    textTransform: 'uppercase',
+                    textTransform:
+                      'uppercase',
                   }}
                 >
                   trust levels
                 </span>
               </div>
 
-              <div style={{ padding: '8px 0' }}>
+              <div
+                style={{
+                  padding: '8px 0',
+                }}
+              >
                 {TRUST_LEVELS.map((l) => (
                   <div
                     key={l.label}
@@ -317,49 +437,95 @@ export default function Page() {
                       alignItems: 'center',
                       gap: 8,
                       padding: '4px 14px',
-                      background:
-                        score >= l.min && TRUST_LEVELS.find((x) => x.min <= score) === l
-                          ? 'rgba(123,156,255,0.05)'
-                          : 'transparent',
                     }}
                   >
-                    <span style={{ fontSize: 11 }}>{l.emoji}</span>
-                    <span style={{ color: l.color, fontSize: 10, fontWeight: 600, flex: 1 }}>
+                    <span
+                      style={{
+                        fontSize: 11,
+                      }}
+                    >
+                      {l.emoji}
+                    </span>
+
+                    <span
+                      style={{
+                        color: l.color,
+                        fontSize: 10,
+                        fontWeight: 600,
+                        flex: 1,
+                      }}
+                    >
                       {l.label}
                     </span>
-                    <span style={{ color: 'var(--dimmer)', fontSize: 9 }}>
-                      {l.min === 0 ? '0+' : `${l.min}+`}
+
+                    <span
+                      style={{
+                        color:
+                          'var(--dimmer)',
+                        fontSize: 9,
+                      }}
+                    >
+                      {l.min === 200
+                        ? '200+'
+                        : `${l.min}+`}
                     </span>
                   </div>
                 ))}
               </div>
             </div>
 
-            <ChamberLeaderboard stats={stats} />
+            <ChamberLeaderboard
+              stats={stats}
+            />
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 12,
+            }}
+          >
             {!wallet && (
               <div
                 style={{
-                  border: '1px dashed var(--border2)',
+                  border:
+                    '1px dashed var(--border2)',
                   borderRadius: 6,
-                  background: 'var(--panel)',
-                  padding: '18px 16px',
+                  background:
+                    'var(--panel)',
+                  padding:
+                    '20px 16px',
                   textAlign: 'center',
                 }}
               >
-                <div style={{ fontSize: 28, marginBottom: 8 }}>🟣</div>
-                <div style={{ color: 'var(--dim)', fontSize: 12, marginBottom: 14 }}>
+                <div
+                  style={{
+                    fontSize: 28,
+                    marginBottom: 8,
+                  }}
+                >
+                  🟣
+                </div>
+
+                <div
+                  style={{
+                    color: 'var(--dim)',
+                    fontSize: 12,
+                    marginBottom: 14,
+                  }}
+                >
                   connect phantom to feed klik
                 </div>
+
                 <WalletMultiButton />
               </div>
             )}
 
             <div
               style={{
-                border: '1px solid var(--border)',
+                border:
+                  '1px solid var(--border)',
                 borderRadius: 6,
                 background: 'var(--panel)',
                 overflow: 'hidden',
@@ -368,8 +534,10 @@ export default function Page() {
               <div
                 style={{
                   padding: '8px 14px',
-                  borderBottom: '1px solid var(--border)',
-                  background: 'rgba(0,0,0,0.3)',
+                  borderBottom:
+                    '1px solid var(--border)',
+                  background:
+                    'rgba(0,0,0,0.3)',
                 }}
               >
                 <span
@@ -377,19 +545,30 @@ export default function Page() {
                     color: 'var(--dim)',
                     fontSize: 10,
                     letterSpacing: '0.12em',
-                    textTransform: 'uppercase',
+                    textTransform:
+                      'uppercase',
                   }}
                 >
                   ◆ choose what to feed
                 </span>
               </div>
 
-              <div style={{ padding: 12, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              <div
+                style={{
+                  padding: 12,
+                  display: 'grid',
+                  gridTemplateColumns:
+                    '1fr 1fr',
+                  gap: 8,
+                }}
+              >
                 {SHOP_ITEMS.map((item) => (
                   <ShopItemCard
                     key={item.id}
                     item={item}
-                    onClick={() => setSelected(item)}
+                    onClick={() =>
+                      setSelected(item)
+                    }
                     disabled={!wallet}
                   />
                 ))}
@@ -398,7 +577,8 @@ export default function Page() {
 
             <div
               style={{
-                border: '1px solid var(--border)',
+                border:
+                  '1px solid var(--border)',
                 borderRadius: 6,
                 background: 'var(--panel)',
                 overflow: 'hidden',
@@ -410,8 +590,10 @@ export default function Page() {
                   alignItems: 'center',
                   gap: 8,
                   padding: '8px 14px',
-                  borderBottom: '1px solid var(--border)',
-                  background: 'rgba(0,0,0,0.3)',
+                  borderBottom:
+                    '1px solid var(--border)',
+                  background:
+                    'rgba(0,0,0,0.3)',
                 }}
               >
                 <span
@@ -423,30 +605,45 @@ export default function Page() {
                     display: 'inline-block',
                   }}
                 />
+
                 <span
                   style={{
                     color: 'var(--dim)',
                     fontSize: 10,
                     letterSpacing: '0.12em',
-                    textTransform: 'uppercase',
+                    textTransform:
+                      'uppercase',
                   }}
                 >
                   session feed
                 </span>
               </div>
 
-              <div style={{ padding: 12 }}>
+              <div
+                style={{
+                  padding: 12,
+                }}
+              >
                 <LiveFeed events={feed} />
               </div>
             </div>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <ChamberLiveFeed stats={stats} />
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 12,
+            }}
+          >
+            <ChamberLiveFeed
+              stats={stats}
+            />
 
             <div
               style={{
-                border: '1px solid var(--border)',
+                border:
+                  '1px solid var(--border)',
                 borderRadius: 6,
                 background: 'var(--panel)',
                 padding: 14,
@@ -457,24 +654,69 @@ export default function Page() {
                   color: 'var(--dim)',
                   fontSize: 10,
                   letterSpacing: '0.1em',
-                  textTransform: 'uppercase',
+                  textTransform:
+                    'uppercase',
                   marginBottom: 10,
                 }}
               >
                 how it works
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 8,
+                }}
+              >
                 {[
-                  ['🦞', 'feed klik with SOL'],
-                  ['🏆', 'top chamber votes get signal bonus'],
-                  ['📉', 'spammy messages drag trust down'],
-                  ['💬', 'strong messages and votes lift it up'],
-                  ['👑', 'trustless feed only mode is optional'],
+                  [
+                    '🦞',
+                    'feed klik with SOL to earn trust points',
+                  ],
+                  [
+                    '🏆',
+                    'chamber top voters get highest trust score',
+                  ],
+                  [
+                    '📉',
+                    'spamming the chat reduces your trust',
+                  ],
+                  [
+                    '💡',
+                    'smart messages that get upvoted = +trust',
+                  ],
+                  [
+                    '👑',
+                    '200+ pts = CHAMBER LEGEND status',
+                  ],
                 ].map(([icon, text]) => (
-                  <div key={text} style={{ display: 'flex', gap: 8, alignItems: 'start' }}>
-                    <span style={{ fontSize: 12, flexShrink: 0 }}>{icon}</span>
-                    <span style={{ color: 'var(--dim)', fontSize: 10, lineHeight: 1.5 }}>{text}</span>
+                  <div
+                    key={text}
+                    style={{
+                      display: 'flex',
+                      gap: 8,
+                      alignItems: 'start',
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: 12,
+                        flexShrink: 0,
+                      }}
+                    >
+                      {icon}
+                    </span>
+
+                    <span
+                      style={{
+                        color: 'var(--dim)',
+                        fontSize: 10,
+                        lineHeight: 1.5,
+                      }}
+                    >
+                      {text}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -482,18 +724,43 @@ export default function Page() {
 
             <div
               style={{
-                border: '1px solid var(--border)',
+                border:
+                  '1px solid var(--border)',
                 borderRadius: 6,
                 background: 'var(--panel)',
                 padding: 14,
               }}
             >
-              <div style={{ color: 'var(--dimmer)', fontSize: 9, lineHeight: 1.8 }}>
-                <div>all txns go directly to creator wallet</div>
-                <div style={{ color: 'var(--dimmer)', wordBreak: 'break-all', marginTop: 4 }}>
+              <div
+                style={{
+                  color: 'var(--dimmer)',
+                  fontSize: 9,
+                  lineHeight: 1.8,
+                }}
+              >
+                <div>
+                  all txns go directly to creator
+                  wallet
+                </div>
+
+                <div
+                  style={{
+                    color: 'var(--dimmer)',
+                    wordBreak: 'break-all',
+                    marginTop: 4,
+                  }}
+                >
                   Ghz2RotTtZKJeUFFNVfYV8NrB6TW5ZkJKQGcVYx31PvD
                 </div>
-                <div style={{ marginTop: 8 }}>non-custodial · no login · phantom only</div>
+
+                <div
+                  style={{
+                    marginTop: 8,
+                  }}
+                >
+                  non-custodial · no login · phantom
+                  only
+                </div>
               </div>
             </div>
           </div>
@@ -504,7 +771,9 @@ export default function Page() {
         <BuyModal
           item={selected}
           onConfirm={handleBuy}
-          onCancel={() => setSelected(null)}
+          onCancel={() =>
+            setSelected(null)
+          }
           loading={loading}
         />
       )}
