@@ -1,0 +1,94 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --bg: #05060a;
+  --bg2: #080b10;
+  --panel: #0b0f16;
+  --border: #1a2030;
+  --border2: #242d3d;
+  --text: #c8d0dc;
+  --dim: #4a5568;
+  --dimmer: #2d3748;
+  --accent: #7b9cff;
+  --gold: #e8c84a;
+  --green: #4aff9a;
+  --red: #ff4a6e;
+  --purple: #b87bff;
+}
+
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+.wallet-adapter-button {
+  background: transparent !important;
+  border: 1px solid var(--border2) !important;
+  border-radius: 4px !important;
+  font-family: 'JetBrains Mono', monospace !important;
+  font-size: 11px !important;
+  height: 32px !important;
+  padding: 0 12px !important;
+  color: var(--dim) !important;
+  letter-spacing: 0.05em !important;
+  transition: all 0.15s !important;
+}
+.wallet-adapter-button:hover {
+  border-color: var(--accent) !important;
+  color: var(--accent) !important;
+  background: rgba(123,156,255,0.05) !important;
+}
+.wallet-adapter-modal-wrapper {
+  background: var(--panel) !important;
+  border: 1px solid var(--border2) !important;
+  border-radius: 8px !important;
+  font-family: 'JetBrains Mono', monospace !important;
+}
+
+::-webkit-scrollbar { width: 3px; height: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.025) 2px, rgba(0,0,0,0.025) 4px);
+  pointer-events: none;
+  z-index: 9999;
+}
+
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes bob { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-6px); } }
+@keyframes wiggle { 0%, 100% { transform: rotate(-6deg) scale(1.02); } 25% { transform: rotate(6deg) scale(1.05); } 50% { transform: rotate(-6deg) scale(1.02); } 75% { transform: rotate(6deg) scale(1.05); } }
+@keyframes megaDance { 0% { transform: rotate(0deg) scale(1); } 20% { transform: rotate(-12deg) scale(1.15); } 40% { transform: rotate(12deg) scale(1.2); } 60% { transform: rotate(-12deg) scale(1.15); } 80% { transform: rotate(12deg) scale(1.2); } 100% { transform: rotate(0deg) scale(1); } }
+@keyframes shake { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-8px); } 40% { transform: translateX(8px); } 60% { transform: translateX(-6px); } 80% { transform: translateX(6px); } }
+@keyframes sway { 0%, 100% { transform: translateX(0) rotate(-2deg); } 50% { transform: translateX(8px) rotate(2deg); } }
+@keyframes nibble { 0%, 100% { transform: translateY(0); } 25% { transform: translateY(-3px); } 75% { transform: translateY(3px); } }
+@keyframes droopIn { 0% { transform: translateY(0) rotate(0deg); } 100% { transform: translateY(8px) rotate(-4deg); } }
+@keyframes scaleIn { 0% { transform: scale(0) rotate(-180deg); opacity: 0; } 100% { transform: scale(1) rotate(0deg); opacity: 1; } }
+@keyframes spin360 { 0% { transform: rotate(0deg) scale(1); } 50% { transform: rotate(180deg) scale(1.2); } 100% { transform: rotate(360deg) scale(1); } }
+
+.animate-bob { animation: bob 2.5s ease-in-out infinite; }
+.animate-wiggle { animation: wiggle 0.6s ease-in-out; }
+.animate-megaDance { animation: megaDance 1s ease-in-out 3; }
+.animate-shake { animation: shake 0.8s ease-in-out; }
+.animate-sway { animation: sway 1.2s ease-in-out infinite; }
+.animate-nibble { animation: nibble 0.4s ease-in-out 4; }
+.animate-droopIn { animation: droopIn 0.5s ease-out forwards; }
+.animate-slideUp { animation: slideUp 0.3s ease-out; }
+.animate-scaleIn { animation: scaleIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.animate-spin360 { animation: spin360 0.8s ease-in-out; }
+.animate-fadeIn { animation: fadeIn 0.4s ease-out; }
