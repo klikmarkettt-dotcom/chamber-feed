@@ -222,8 +222,7 @@ export default function Page() {
               padding: '8px 12px',
               fontSize: 11,
               cursor: 'pointer',
-              animation:
-                'slideUp 0.3s ease-out',
+              animation: 'slideUp 0.3s ease-out',
               background: 'var(--panel)',
               color:
                 t.type === 'success'
@@ -240,9 +239,7 @@ export default function Page() {
                 href={t.href}
                 target="_blank"
                 rel="noreferrer"
-                onClick={(e) =>
-                  e.stopPropagation()
-                }
+                onClick={(e) => e.stopPropagation()}
                 style={{
                   display: 'block',
                   fontSize: 9,
@@ -263,13 +260,11 @@ export default function Page() {
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '10px 20px',
-          borderBottom:
-            '1px solid var(--border)',
+          borderBottom: '1px solid var(--border)',
           position: 'sticky',
           top: 0,
           zIndex: 30,
-          background:
-            'rgba(5,6,10,0.97)',
+          background: 'rgba(5,6,10,0.97)',
           backdropFilter: 'blur(12px)',
         }}
       >
@@ -280,12 +275,7 @@ export default function Page() {
             gap: 12,
           }}
         >
-          <span
-            style={{
-              color: 'var(--accent)',
-              fontSize: 14,
-            }}
-          >
+          <span style={{ color: 'var(--accent)', fontSize: 14 }}>
             ☿
           </span>
 
@@ -312,10 +302,7 @@ export default function Page() {
                 href="https://chamber-stats.vercel.app/"
                 target="_blank"
                 rel="noreferrer"
-                style={{
-                  color: 'inherit',
-                  textDecoration: 'none',
-                }}
+                style={{ color: 'inherit', textDecoration: 'none' }}
               >
                 · chamber-stats.vercel.app
               </a>
@@ -323,17 +310,8 @@ export default function Page() {
           </div>
         </div>
 
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 10,
-          }}
-        >
-          {wallet && (
-            <TrustBadge score={score} />
-          )}
-
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          {wallet && <TrustBadge score={score} />}
           <WalletMultiButton />
         </div>
       </header>
@@ -362,22 +340,15 @@ export default function Page() {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns:
-              'minmax(0,1fr) minmax(0,1fr) minmax(0,1fr)',
+            gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr) minmax(0,1fr)',
             gap: 16,
           }}
         >
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 12,
-            }}
-          >
+          {/* LEFT COLUMN */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div
               style={{
-                border:
-                  '1px solid var(--border)',
+                border: '1px solid var(--border)',
                 borderRadius: 6,
                 background: 'var(--panel)',
                 display: 'flex',
@@ -398,8 +369,7 @@ export default function Page() {
 
             <div
               style={{
-                border:
-                  '1px solid var(--border)',
+                border: '1px solid var(--border)',
                 borderRadius: 6,
                 background: 'var(--panel)',
                 overflow: 'hidden',
@@ -408,10 +378,8 @@ export default function Page() {
               <div
                 style={{
                   padding: '8px 14px',
-                  borderBottom:
-                    '1px solid var(--border)',
-                  background:
-                    'rgba(0,0,0,0.3)',
+                  borderBottom: '1px solid var(--border)',
+                  background: 'rgba(0,0,0,0.3)',
                 }}
               >
                 <span
@@ -419,19 +387,14 @@ export default function Page() {
                     color: 'var(--dim)',
                     fontSize: 10,
                     letterSpacing: '0.12em',
-                    textTransform:
-                      'uppercase',
+                    textTransform: 'uppercase',
                   }}
                 >
                   trust levels
                 </span>
               </div>
 
-              <div
-                style={{
-                  padding: '8px 0',
-                }}
-              >
+              <div style={{ padding: '8px 0' }}>
                 {TRUST_LEVELS.map((l) => (
                   <div
                     key={l.label}
@@ -442,14 +405,7 @@ export default function Page() {
                       padding: '4px 14px',
                     }}
                   >
-                    <span
-                      style={{
-                        fontSize: 11,
-                      }}
-                    >
-                      {l.emoji}
-                    </span>
-
+                    <span style={{ fontSize: 11 }}>{l.emoji}</span>
                     <span
                       style={{
                         color: l.color,
@@ -460,57 +416,30 @@ export default function Page() {
                     >
                       {l.label}
                     </span>
-
-                    <span
-                      style={{
-                        color:
-                          'var(--dimmer)',
-                        fontSize: 9,
-                      }}
-                    >
-                      {l.min === 120
-                        ? '120+'
-                        : `${l.min}+`}
+                    <span style={{ color: 'var(--dimmer)', fontSize: 9 }}>
+                      {l.min === 120 ? '120+' : `${l.min}+`}
                     </span>
                   </div>
                 ))}
               </div>
             </div>
 
-            <ChamberLeaderboard
-              stats={stats}
-            />
+            <ChamberLeaderboard stats={stats} />
           </div>
 
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 12,
-            }}
-          >
+          {/* MIDDLE COLUMN */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {!wallet && (
               <div
                 style={{
-                  border:
-                    '1px dashed var(--border2)',
+                  border: '1px dashed var(--border2)',
                   borderRadius: 6,
-                  background:
-                    'var(--panel)',
-                  padding:
-                    '20px 16px',
+                  background: 'var(--panel)',
+                  padding: '20px 16px',
                   textAlign: 'center',
                 }}
               >
-                <div
-                  style={{
-                    fontSize: 28,
-                    marginBottom: 8,
-                  }}
-                >
-                  🟣
-                </div>
-
+                <div style={{ fontSize: 28, marginBottom: 8 }}>🟣</div>
                 <div
                   style={{
                     color: 'var(--dim)',
@@ -520,15 +449,13 @@ export default function Page() {
                 >
                   connect phantom to feed klik
                 </div>
-
                 <WalletMultiButton />
               </div>
             )}
 
             <div
               style={{
-                border:
-                  '1px solid var(--border)',
+                border: '1px solid var(--border)',
                 borderRadius: 6,
                 background: 'var(--panel)',
                 overflow: 'hidden',
@@ -537,10 +464,8 @@ export default function Page() {
               <div
                 style={{
                   padding: '8px 14px',
-                  borderBottom:
-                    '1px solid var(--border)',
-                  background:
-                    'rgba(0,0,0,0.3)',
+                  borderBottom: '1px solid var(--border)',
+                  background: 'rgba(0,0,0,0.3)',
                 }}
               >
                 <span
@@ -548,8 +473,7 @@ export default function Page() {
                     color: 'var(--dim)',
                     fontSize: 10,
                     letterSpacing: '0.12em',
-                    textTransform:
-                      'uppercase',
+                    textTransform: 'uppercase',
                   }}
                 >
                   ◆ choose what to feed
@@ -560,8 +484,7 @@ export default function Page() {
                 style={{
                   padding: 12,
                   display: 'grid',
-                  gridTemplateColumns:
-                    '1fr 1fr',
+                  gridTemplateColumns: '1fr 1fr',
                   gap: 8,
                 }}
               >
@@ -569,9 +492,7 @@ export default function Page() {
                   <ShopItemCard
                     key={item.id}
                     item={item}
-                    onClick={() =>
-                      setSelected(item)
-                    }
+                    onClick={() => setSelected(item)}
                     disabled={!wallet}
                   />
                 ))}
@@ -580,8 +501,7 @@ export default function Page() {
 
             <div
               style={{
-                border:
-                  '1px solid var(--border)',
+                border: '1px solid var(--border)',
                 borderRadius: 6,
                 background: 'var(--panel)',
                 overflow: 'hidden',
@@ -593,10 +513,8 @@ export default function Page() {
                   alignItems: 'center',
                   gap: 8,
                   padding: '8px 14px',
-                  borderBottom:
-                    '1px solid var(--border)',
-                  background:
-                    'rgba(0,0,0,0.3)',
+                  borderBottom: '1px solid var(--border)',
+                  background: 'rgba(0,0,0,0.3)',
                 }}
               >
                 <span
@@ -608,45 +526,31 @@ export default function Page() {
                     display: 'inline-block',
                   }}
                 />
-
                 <span
                   style={{
                     color: 'var(--dim)',
                     fontSize: 10,
                     letterSpacing: '0.12em',
-                    textTransform:
-                      'uppercase',
+                    textTransform: 'uppercase',
                   }}
                 >
                   session feed
                 </span>
               </div>
 
-              <div
-                style={{
-                  padding: 12,
-                }}
-              >
+              <div style={{ padding: 12 }}>
                 <LiveFeed events={feed} />
               </div>
             </div>
           </div>
 
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 12,
-            }}
-          >
-            <ChamberLiveFeed
-              stats={stats}
-            />
+          {/* RIGHT COLUMN */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <ChamberLiveFeed stats={stats} />
 
             <div
               style={{
-                border:
-                  '1px solid var(--border)',
+                border: '1px solid var(--border)',
                 borderRadius: 6,
                 background: 'var(--panel)',
                 padding: 14,
@@ -657,60 +561,26 @@ export default function Page() {
                   color: 'var(--dim)',
                   fontSize: 10,
                   letterSpacing: '0.1em',
-                  textTransform:
-                    'uppercase',
+                  textTransform: 'uppercase',
                   marginBottom: 10,
                 }}
               >
                 how it works
               </div>
 
-              <div
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 8,
-                }}
-              >
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {[
-                  [
-                    '🦞',
-                    'feed klik with SOL to earn trust points',
-                  ],
-                  [
-                    '🏆',
-                    'chamber top voters get highest trust score',
-                  ],
-                  [
-                    '📉',
-                    'spamming the chat reduces your trust',
-                  ],
-                  [
-                    '💡',
-                    'smart messages that get upvoted = +trust',
-                  ],
-                  [
-                    '👑',
-                    '120+ pts = CHAMBER LEGEND status',
-                  ],
+                  ['🦞', 'feed klik with SOL to earn trust points'],
+                  ['🏆', 'chamber top voters get highest trust score'],
+                  ['📉', 'spamming the chat reduces your trust'],
+                  ['💡', 'smart messages that get upvoted = +trust'],
+                  ['👑', '120+ pts = CHAMBER LEGEND status'],
                 ].map(([icon, text]) => (
                   <div
                     key={text}
-                    style={{
-                      display: 'flex',
-                      gap: 8,
-                      alignItems: 'start',
-                    }}
+                    style={{ display: 'flex', gap: 8, alignItems: 'start' }}
                   >
-                    <span
-                      style={{
-                        fontSize: 12,
-                        flexShrink: 0,
-                      }}
-                    >
-                      {icon}
-                    </span>
-
+                    <span style={{ fontSize: 12, flexShrink: 0 }}>{icon}</span>
                     <span
                       style={{
                         color: 'var(--dim)',
@@ -727,8 +597,7 @@ export default function Page() {
 
             <div
               style={{
-                border:
-                  '1px solid var(--border)',
+                border: '1px solid var(--border)',
                 borderRadius: 6,
                 background: 'var(--panel)',
                 padding: 14,
@@ -741,11 +610,7 @@ export default function Page() {
                   lineHeight: 1.8,
                 }}
               >
-                <div>
-                  all txns go directly to creator
-                  wallet
-                </div>
-
+                <div>all txns go directly to creator wallet</div>
                 <div
                   style={{
                     color: 'var(--dimmer)',
@@ -755,14 +620,8 @@ export default function Page() {
                 >
                   Ghz2RotTtZKJeUFFNVfYV8NrB6TW5ZkJKQGcVYx31PvD
                 </div>
-
-                <div
-                  style={{
-                    marginTop: 8,
-                  }}
-                >
-                  non-custodial · no login · phantom
-                  only
+                <div style={{ marginTop: 8 }}>
+                  non-custodial · no login · phantom only
                 </div>
               </div>
             </div>
@@ -774,9 +633,7 @@ export default function Page() {
         <BuyModal
           item={selected}
           onConfirm={handleBuy}
-          onCancel={() =>
-            setSelected(null)
-          }
+          onCancel={() => setSelected(null)}
           loading={loading}
         />
       )}
