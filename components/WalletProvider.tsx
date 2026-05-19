@@ -12,14 +12,9 @@ const ConnectionProvider = RawConnectionProvider as unknown as ComponentType<any
 const WalletProvider = RawWalletProvider as unknown as ComponentType<any>
 const WalletModalProvider = RawWalletModalProvider as unknown as ComponentType<any>
 
-const RPC =
-  process.env.NEXT_PUBLIC_RPC_URL || 'https://api.mainnet-beta.solana.com'
+const RPC = process.env.NEXT_PUBLIC_RPC_URL || 'https://api.mainnet-beta.solana.com'
 
-export function SolanaWalletProvider({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export function SolanaWalletProvider({ children }: { children: React.ReactNode }) {
   const wallets = useMemo(() => [new PhantomWalletAdapter()], [])
 
   return (
