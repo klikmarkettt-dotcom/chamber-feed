@@ -1,266 +1,290 @@
 'use client'
+
+import dynamic from 'next/dynamic'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useWallet } from '@solana/wallet-adapter-react'
-import { WalletMultiButton } from '@solana/wallet-adapter-react-ui'
 import { LobsterSVG } from '@/components/LobsterSVG'
 import { ShopItemCard } from '@/components/ShopItem'
 import { BuyModal } from '@/components/BuyModal'
 import { TrustBadge } from '@/components/TrustBadge'
 import { LiveFeed, type FeedItem } from '@/components/LiveFeed'
-import { ChamberStatsPanel, ChamberLeaderboard, ChamberLiveFeed } from '@/components/ChamberStatsPanel'
+import {
+  ChamberStatsPanel,
+  ChamberLeaderboard,
+  ChamberLiveFeed,
+} from '@/components/ChamberStatsPanel'
 import { useTrustScore } from '@/hooks/useTrustScore'
 import { useSolanaPayment } from '@/hooks/useSolanaPayment'
 import { useChamberStats } from '@/hooks/useChamberStats'
-import { SHOP_ITEMS, type ShopItem, type LobsterReaction, TRUST_LEVELS } from '@/lib/items'
+import {
+  SHOP_ITEMS,
+  type ShopItem,
+  type LobsterReaction,
+  TRUST_LEVELS,
+} from '@/lib/items'
 
-interface Toast { id: number; text: string; type: 'success' | 'error' | 'levelup'; href?: string }
+const WalletMultiButton = dynamic(
+  async () => {
+    const mod = await import('@solana/wallet-adapter-react-ui')
+    return mod.WalletMultiButton as any
+  },
+  { ssr: false }
+)
+
+interface Toast {
+  id: number
+  text: string
+  type: 'success' | 'error' | 'levelup'
+  href?: string
+}
 
 export default function Page() {
   const { publicKey } = useWallet()
   const wallet = publicKey?.toBase58() ?? null
-  const { stats, loading: statsLoading, error: statsError } = useChamberStats()
+
+  const { stats, loading: statsLoading, error: statsError } =
+    useChamberStats()
+
   const { score, addScore, levelUp } = useTrustScore(wallet, stats)
+
   const { pay, loading } = useSolanaPayment()
+
   const [selected, setSelected] = useState<ShopItem | null>(null)
-  const [reaction, setReaction] = useState<LobsterReaction>('idle')
-  const [speech, setSpeech] = useState('Feed me... 🦞')
+  const [reaction, setReaction] =
+    useState<LobsterReaction>('idle')
+
+  const [speech, setSpeech] =
+    useState('Feed me... 🦞')
+
   const [toasts, setToasts] = useState<Toast[]>([])
   const [feed, setFeed] = useState<FeedItem[]>([])
+
   const tid = useRef(0)
 
-  const toast = useCallback((text: string, type: Toast['type'], href?: string) => {
-    const id = ++tid.current
-    setToasts((p) => [...p, { id, text, type, href }])
-    setTimeout(() => setToasts((p) => p.filter((t) => t.id !== id)), 5000)
-  }, [])
+  const toast = useCallback(
+    (
+      text: string,
+      type: Toast['type'],
+      href?: string
+    ) => {
+      const id = ++tid.current
 
-  useEffect(() => { if (levelUp) toast(`🎉 LEVEL UP · ${levelUp}`, 'levelup') }, [levelUp, toast])
+      setToasts((p) => [
+        ...p,
+        { id, text, type, href },
+      ])
+
+      setTimeout(() => {
+        setToasts((p) =>
+          p.filter((t) => t.id !== id)
+        )
+      }, 5000)
+    },
+    []
+  )
+
+  useEffect(() => {
+    if (levelUp) {
+      toast(`🎉 LEVEL UP · ${levelUp}`, 'levelup')
+    }
+  }, [levelUp, toast])
 
   useEffect(() => {
     if (reaction !== 'idle') return
-    const phrases = ['Feed me... 🦞', 'hungry for SOL 🌊', 'SOL accepted 🦐', 'claws ready... 🦀', 'chamber is watching 👁']
-    const iv = setInterval(() => setSpeech(phrases[Math.floor(Math.random() * phrases.length)]), 4000)
+
+    const phrases = [
+      'Feed me... 🦞',
+      'hungry for SOL 🌊',
+      'SOL accepted 🦐',
+      'claws ready... 🦀',
+      'chamber is watching 👁',
+    ]
+
+    const iv = setInterval(() => {
+      setSpeech(
+        phrases[
+          Math.floor(Math.random() * phrases.length)
+        ]
+      )
+    }, 4000)
+
     return () => clearInterval(iv)
   }, [reaction])
 
   async function handleBuy(tip: number) {
     if (!selected) return
+
     try {
-      const result = await pay({ amountSol: selected.price, tipSol: tip })
+      const result = await pay({
+        amountSol: selected.price,
+        tipSol: tip,
+      })
+
       setReaction(selected.reaction)
       setSpeech(selected.speech)
+
       addScore(selected.trustBoost)
+
       if (wallet) {
-        setFeed((p) => [{
-          id: result.signature,
-          wallet,
-          itemName: selected.name,
-          itemEmoji: selected.emoji,
-          price: selected.price,
-          trustBoost: selected.trustBoost,
-          signature: result.signature,
-          when: Date.now(),
-        }, ...p].slice(0, 10))
+        setFeed((p) => [
+          {
+            id: result.signature,
+            wallet,
+            itemName: selected.name,
+            itemEmoji: selected.emoji,
+            price: selected.price,
+            trustBoost: selected.trustBoost,
+            signature: result.signature,
+            when: Date.now(),
+          },
+          ...p,
+        ].slice(0, 10))
       }
-      toast(`✓ fed! +${selected.trustBoost} trust earned`, 'success', result.explorerUrl)
+
+      toast(
+        `✓ fed! +${selected.trustBoost} trust earned`,
+        'success',
+        result.explorerUrl
+      )
+
       setSelected(null)
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : ''
+      const msg =
+        err instanceof Error ? err.message : ''
+
       setReaction('sad')
       setSpeech('Oof... 😢')
-      toast(`✗ ${msg.includes('rejected') ? 'rejected' : msg.includes('funds') ? 'insufficient funds' : 'transaction failed'}`, 'error')
+
+      toast(
+        `✗ ${
+          msg.includes('rejected')
+            ? 'rejected'
+            : msg.includes('funds')
+            ? 'insufficient funds'
+            : 'transaction failed'
+        }`,
+        'error'
+      )
+
       setSelected(null)
     }
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
-
-      {/* Toasts */}
-      <div style={{ position: 'fixed', top: 12, right: 12, zIndex: 60, display: 'flex', flexDirection: 'column', gap: 6, maxWidth: 320 }}>
-        {toasts.map((t) => (
-          <div key={t.id} onClick={() => setToasts((p) => p.filter((x) => x.id !== t.id))}
-            style={{
-              border: '1px solid',
-              borderColor: t.type === 'success' ? 'rgba(74,255,154,0.3)' : t.type === 'levelup' ? 'rgba(184,123,255,0.4)' : 'rgba(255,74,110,0.3)',
-              borderRadius: 5,
-              padding: '8px 12px',
-              fontSize: 11,
-              cursor: 'pointer',
-              animation: 'slideUp 0.3s ease-out',
-              background: 'var(--panel)',
-              color: t.type === 'success' ? 'var(--green)' : t.type === 'levelup' ? 'var(--purple)' : 'var(--red)',
-            }}>
-            {t.text}
-            {t.href && (
-              <a href={t.href} target="_blank" rel="noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                style={{ display: 'block', fontSize: 9, color: 'var(--dimmer)', marginTop: 2 }}>
-                solscan ↗
-              </a>
-            )}
-          </div>
-        ))}
-      </div>
-
-      {/* Header */}
-      <header style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '10px 20px',
-        borderBottom: '1px solid var(--border)',
-        position: 'sticky', top: 0, zIndex: 30,
-        background: 'rgba(5,6,10,0.97)',
-        backdropFilter: 'blur(12px)',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={{ color: 'var(--accent)', fontSize: 14 }}>☿</span>
-          <div>
-            <div style={{ color: 'var(--text)', fontSize: 13, fontWeight: 600, letterSpacing: '0.1em' }}>
-              FEED THE LOBSTER
-            </div>
-            <div style={{ color: 'var(--dimmer)', fontSize: 9, letterSpacing: '0.08em' }}>
-              <a href="https://chamber-stats.vercel.app/" target="_blank" rel="noreferrer"
-                style={{ color: 'inherit', textDecoration: 'none' }}>
-                · chamber-stats.vercel.app
-              </a>
-            </div>
-          </div>
+    <div style={{ minHeight: '100vh' }}>
+      <header
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          padding: 20,
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            gap: 10,
+            alignItems: 'center',
+          }}
+        >
+          <div>🦞</div>
+          <div>FEED THE LOBSTER</div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+
+        <div
+          style={{
+            display: 'flex',
+            gap: 10,
+            alignItems: 'center',
+          }}
+        >
           {wallet && <TrustBadge score={score} />}
           <WalletMultiButton />
         </div>
       </header>
 
-      {/* Chamber stats bar */}
-      <div style={{ padding: '12px 20px 0', maxWidth: 1100, margin: '0 auto' }}>
-        <ChamberStatsPanel stats={stats} loading={statsLoading} error={statsError} />
-      </div>
+      <main
+        style={{
+          maxWidth: 1100,
+          margin: '0 auto',
+          padding: 20,
+        }}
+      >
+        <ChamberStatsPanel
+          stats={stats}
+          loading={statsLoading}
+          error={statsError}
+        />
 
-      <main style={{ maxWidth: 1100, margin: '0 auto', padding: '16px 20px 40px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr) minmax(0,1fr)', gap: 16 }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns:
+              '1fr 1fr 1fr',
+            gap: 16,
+            marginTop: 20,
+          }}
+        >
+          <div>
+            <LobsterSVG
+              reaction={reaction}
+              speech={speech}
+              onReactionEnd={() => {
+                setReaction('idle')
+                setSpeech('Feed me... 🦞')
+              }}
+            />
 
-          {/* LEFT: Lobster + Trust levels */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {/* Lobster box */}
-            <div style={{
-              border: '1px solid var(--border)', borderRadius: 6,
-              background: 'var(--panel)',
-              display: 'flex', flexDirection: 'column', alignItems: 'center',
-              padding: '20px 12px',
-            }}>
-              <LobsterSVG
-                reaction={reaction}
-                speech={speech}
-                onReactionEnd={() => { setReaction('idle'); setSpeech('Feed me... 🦞') }}
-              />
-            </div>
-
-            {/* Trust levels */}
-            <div style={{ border: '1px solid var(--border)', borderRadius: 6, background: 'var(--panel)', overflow: 'hidden' }}>
-              <div style={{ padding: '8px 14px', borderBottom: '1px solid var(--border)', background: 'rgba(0,0,0,0.3)' }}>
-                <span style={{ color: 'var(--dim)', fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase' }}>trust levels</span>
-              </div>
-              <div style={{ padding: '8px 0' }}>
-                {TRUST_LEVELS.map((l) => (
-                  <div key={l.label} style={{
-                    display: 'flex', alignItems: 'center', gap: 8,
-                    padding: '4px 14px',
-                    background: score >= l.min && (TRUST_LEVELS.find(x => x.min <= score) === l) ? 'rgba(123,156,255,0.05)' : 'transparent',
-                  }}>
-                    <span style={{ fontSize: 11 }}>{l.emoji}</span>
-                    <span style={{ color: l.color, fontSize: 10, fontWeight: 600, flex: 1 }}>{l.label}</span>
-                    <span style={{ color: 'var(--dimmer)', fontSize: 9 }}>{l.min === 200 ? '200+' : `${l.min}+`}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Chamber leaderboard */}
             <ChamberLeaderboard stats={stats} />
           </div>
 
-          {/* MIDDLE: Shop */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {/* Connect prompt */}
+          <div>
             {!wallet && (
-              <div style={{
-                border: '1px dashed var(--border2)',
-                borderRadius: 6,
-                background: 'var(--panel)',
-                padding: '20px 16px',
-                textAlign: 'center',
-              }}>
-                <div style={{ fontSize: 28, marginBottom: 8 }}>🟣</div>
-                <div style={{ color: 'var(--dim)', fontSize: 12, marginBottom: 14 }}>connect phantom to feed klik</div>
+              <div style={{ marginBottom: 20 }}>
                 <WalletMultiButton />
               </div>
             )}
 
-            <div style={{ border: '1px solid var(--border)', borderRadius: 6, background: 'var(--panel)', overflow: 'hidden' }}>
-              <div style={{ padding: '8px 14px', borderBottom: '1px solid var(--border)', background: 'rgba(0,0,0,0.3)' }}>
-                <span style={{ color: 'var(--dim)', fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase' }}>◆ choose what to feed</span>
-              </div>
-              <div style={{ padding: 12, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                {SHOP_ITEMS.map((item) => (
-                  <ShopItemCard key={item.id} item={item} onClick={() => setSelected(item)} disabled={!wallet} />
-                ))}
-              </div>
-            </div>
-
-            {/* Session feed */}
-            <div style={{ border: '1px solid var(--border)', borderRadius: 6, background: 'var(--panel)', overflow: 'hidden' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderBottom: '1px solid var(--border)', background: 'rgba(0,0,0,0.3)' }}>
-                <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--red)', display: 'inline-block' }} />
-                <span style={{ color: 'var(--dim)', fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase' }}>session feed</span>
-              </div>
-              <div style={{ padding: 12 }}>
-                <LiveFeed events={feed} />
-              </div>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns:
+                  '1fr 1fr',
+                gap: 10,
+              }}
+            >
+              {SHOP_ITEMS.map((item) => (
+                <ShopItemCard
+                  key={item.id}
+                  item={item}
+                  onClick={() =>
+                    setSelected(item)
+                  }
+                  disabled={!wallet}
+                />
+              ))}
             </div>
           </div>
 
-          {/* RIGHT: Chamber live feed */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div>
             <ChamberLiveFeed stats={stats} />
 
-            {/* Info box */}
-            <div style={{ border: '1px solid var(--border)', borderRadius: 6, background: 'var(--panel)', padding: 14 }}>
-              <div style={{ color: 'var(--dim)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 10 }}>how it works</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {[
-                  ['🦞', 'feed klik with SOL to earn trust points'],
-                  ['🏆', 'chamber top voters get highest trust score'],
-                  ['📉', 'spamming the chat reduces your trust'],
-                  ['💡', 'smart messages that get upvoted = +trust'],
-                  ['👑', '200+ pts = CHAMBER LEGEND status'],
-                ].map(([icon, text]) => (
-                  <div key={text} style={{ display: 'flex', gap: 8, alignItems: 'start' }}>
-                    <span style={{ fontSize: 12, flexShrink: 0 }}>{icon}</span>
-                    <span style={{ color: 'var(--dim)', fontSize: 10, lineHeight: 1.5 }}>{text}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Footer info */}
-            <div style={{ border: '1px solid var(--border)', borderRadius: 6, background: 'var(--panel)', padding: 14 }}>
-              <div style={{ color: 'var(--dimmer)', fontSize: 9, lineHeight: 1.8 }}>
-                <div>all txns go directly to creator wallet</div>
-                <div style={{ color: 'var(--dimmer)', wordBreak: 'break-all', marginTop: 4 }}>
-                  Ghz2RotTtZKJeUFFNVfYV8NrB6TW5ZkJKQGcVYx31PvD
-                </div>
-                <div style={{ marginTop: 8 }}>non-custodial · no login · phantom only</div>
-              </div>
+            <div style={{ marginTop: 20 }}>
+              <LiveFeed events={feed} />
             </div>
           </div>
-
         </div>
       </main>
 
       {selected && (
-        <BuyModal item={selected} onConfirm={handleBuy} onCancel={() => setSelected(null)} loading={loading} />
+        <BuyModal
+          item={selected}
+          onConfirm={handleBuy}
+          onCancel={() =>
+            setSelected(null)
+          }
+          loading={loading}
+        />
       )}
     </div>
   )
-}
+              }
