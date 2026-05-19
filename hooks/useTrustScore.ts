@@ -1,50 +1,112 @@
 'use client'
-import { useCallback, useEffect, useState } from 'react'
+
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { getTrustLevel } from '@/lib/items'
-import type { ChamberStats } from '@/lib/chamberStats'
+import { computeCommunitySignal, type ChamberStats } from '@/lib/chamberStats'
 
 export function useTrustScore(walletAddress: string | null, chamberStats: ChamberStats | null) {
-  const [score, setScore] = useState(0)
+  const [baseScore, setBaseScore] = useState(0)
   const [levelUp, setLevelUp] = useState<string | null>(null)
+  const communityScoreRef = useRef(0)
+  const lastLevelRef = useRef(getTrustLevel(0).label)
+  const timerRef = useRef<number | null>(null)
 
-  // Load from localStorage on wallet connect
+  const communityScore = useMemo(() => {
+    if (!chamberStats) return 0
+    return typeof chamberStats.communitySignal === 'number'
+      ? chamberStats.communitySignal
+      : computeCommunitySignal(chamberStats)
+  }, [chamberStats])
+
   useEffect(() => {
-    if (!walletAddress) { setScore(0); return }
-    const stored = localStorage.getItem('ftl_trust_' + walletAddress)
-    setScore(stored ? parseInt(stored, 10) : 0)
+    communityScoreRef.current = communityScore
+  }, [communityScore])
+
+  useEffect(() => {
+    if (!walletAddress) {
+      setBaseScore(0)
+      setLevelUp(null)
+      lastLevelRef.current = getTrustLevel(0).label
+      return
+    }
+
+    const stored = localStorage.getItem(`ftl_trust_${walletAddress}`)
+    const parsed = stored ? Number.parseInt(stored, 10) : 0
+    const safeBase = Number.isFinite(parsed) ? parsed : 0
+
+    setBaseScore(safeBase)
+    lastLevelRef.current = getTrustLevel(Math.max(0, safeBase + communityScoreRef.current)).label
   }, [walletAddress])
 
-  // Boost from chamber: if wallet's twitter handle is top-scored, get bonus
-  // We store a mapping of wallet->twitter in localStorage optionally
-  const addScore = useCallback((boost: number) => {
-    if (!walletAddress) return
-    setScore((prev) => {
-      const next = prev + boost
-      localStorage.setItem('ftl_trust_' + walletAddress, String(next))
-      const prevLvl = getTrustLevel(prev)
-      const nextLvl = getTrustLevel(next)
-      if (nextLvl.label !== prevLvl.label) {
-        setLevelUp(nextLvl.label)
-        setTimeout(() => setLevelUp(null), 4000)
+  useEffect(() => {
+    return () => {
+      if (timerRef.current !== null) {
+        window.clearTimeout(timerRef.current)
       }
-      return next
-    })
-  }, [walletAddress])
+    }
+  }, [])
 
-  // Spam penalty from chamber: if top spammer loses votes, apply penalty
-  const applySpamPenalty = useCallback(() => {
-    if (!walletAddress) return
-    setScore((prev) => {
-      const next = Math.max(0, prev - 3)
-      localStorage.setItem('ftl_trust_' + walletAddress, String(next))
-      return next
-    })
-  }, [walletAddress])
+  const announceLevel = useCallback((effectiveScore: number) => {
+    const nextLabel = getTrustLevel(Math.max(0, effectiveScore)).label
+    if (nextLabel === lastLevelRef.current) return
 
-  // Chamber trust bonus: if feed has smart messages (high score posts), boost
-  const applyChamberBonus = useCallback((bonus: number) => {
-    addScore(bonus)
-  }, [addScore])
+    lastLevelRef.current = nextLabel
+    setLevelUp(nextLabel)
 
-  return { score, addScore, applySpamPenalty, applyChamberBonus, currentLevel: getTrustLevel(score), levelUp }
+    if (timerRef.current !== null) {
+      window.clearTimeout(timerRef.current)
+    }
+
+    timerRef.current = window.setTimeout(() => {
+      setLevelUp(null)
+    }, 4000)
+  }, [])
+
+  const addScore = useCallback(
+    (boost: number) => {
+      if (!walletAddress) return
+
+      setBaseScore((prev) => {
+        const nextBase = Math.max(0, prev + boost)
+        localStorage.setItem(`ftl_trust_${walletAddress}`, String(nextBase))
+        announceLevel(nextBase + communityScoreRef.current)
+        return nextBase
+      })
+    },
+    [walletAddress, announceLevel],
+  )
+
+  const applySpamPenalty = useCallback(
+    (amount = 3) => {
+      if (!walletAddress) return
+
+      setBaseScore((prev) => {
+        const nextBase = Math.max(0, prev - amount)
+        localStorage.setItem(`ftl_trust_${walletAddress}`, String(nextBase))
+        announceLevel(nextBase + communityScoreRef.current)
+        return nextBase
+      })
+    },
+    [walletAddress, announceLevel],
+  )
+
+  const applyCommunityBonus = useCallback(
+    (bonus = 2) => {
+      addScore(bonus)
+    },
+    [addScore],
+  )
+
+  const score = Math.max(0, baseScore + communityScore)
+
+  return {
+    score,
+    baseScore,
+    communityScore,
+    addScore,
+    applySpamPenalty,
+    applyCommunityBonus,
+    currentLevel: getTrustLevel(score),
+    levelUp,
+  }
 }
