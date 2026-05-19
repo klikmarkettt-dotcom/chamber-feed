@@ -1,5 +1,6 @@
 'use client'
-import { useEffect, useState, useCallback } from 'react'
+
+import { useCallback, useEffect, useState } from 'react'
 import type { ChamberStats } from '@/lib/chamberStats'
 
 export function useChamberStats() {
@@ -9,9 +10,15 @@ export function useChamberStats() {
 
   const refresh = useCallback(async () => {
     try {
-      const res = await fetch('/api/chamber-stats')
-      if (!res.ok) throw new Error('fetch failed')
-      const data = await res.json()
+      const res = await fetch('/api/chamber-stats', {
+        cache: 'no-store',
+      })
+
+      if (!res.ok) {
+        throw new Error('fetch failed')
+      }
+
+      const data = (await res.json()) as ChamberStats
       setStats(data)
       setError(null)
     } catch {
@@ -23,8 +30,8 @@ export function useChamberStats() {
 
   useEffect(() => {
     refresh()
-    const iv = setInterval(refresh, 15000)
-    return () => clearInterval(iv)
+    const iv = window.setInterval(refresh, 12000)
+    return () => window.clearInterval(iv)
   }, [refresh])
 
   return { stats, loading, error, refresh }
