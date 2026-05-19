@@ -119,7 +119,7 @@ export default function Page() {
     return () => clearInterval(iv)
   }, [reaction])
 
-  async function handleBuy(tip: number) {
+  async function handleBuy({ tip, grantTrust }: { tip: number; grantTrust: boolean }) {
     if (!selected) return
 
     try {
@@ -132,7 +132,9 @@ export default function Page() {
 
       setSpeech(selected.speech)
 
-      addScore(selected.trustBoost)
+      if (grantTrust) {
+        addScore(selected.trustBoost)
+      }
 
       if (wallet) {
         setFeed((p) => [
@@ -143,6 +145,7 @@ export default function Page() {
             itemEmoji: selected.emoji,
             price: selected.price,
             trustBoost: selected.trustBoost,
+            grantTrust,
             signature: result.signature,
             when: Date.now(),
           },
@@ -233,7 +236,7 @@ export default function Page() {
             {t.text}
 
             {t.href && (
-              <a
+              
                 href={t.href}
                 target="_blank"
                 rel="noreferrer"
@@ -305,7 +308,7 @@ export default function Page() {
                 letterSpacing: '0.08em',
               }}
             >
-              <a
+              
                 href="https://chamber-stats.vercel.app/"
                 target="_blank"
                 rel="noreferrer"
@@ -465,8 +468,8 @@ export default function Page() {
                         fontSize: 9,
                       }}
                     >
-                      {l.min === 200
-                        ? '200+'
+                      {l.min === 120
+                        ? '120+'
                         : `${l.min}+`}
                     </span>
                   </div>
@@ -688,7 +691,7 @@ export default function Page() {
                   ],
                   [
                     '👑',
-                    '200+ pts = CHAMBER LEGEND status',
+                    '120+ pts = CHAMBER LEGEND status',
                   ],
                 ].map(([icon, text]) => (
                   <div
