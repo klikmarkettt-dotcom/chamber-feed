@@ -1,63 +1,28 @@
 'use client'
 
-import React, { useMemo } from 'react'
-import dynamic from 'next/dynamic'
+import { useMemo, type ComponentType, type ReactNode } from 'react'
+import {
+  ConnectionProvider as RawConnectionProvider,
+  WalletProvider as RawWalletProvider,
+} from '@solana/wallet-adapter-react'
 import { PhantomWalletAdapter } from '@solana/wallet-adapter-phantom'
-import '@solana/wallet-adapter-react-ui/styles.css'
+import { WalletModalProvider as RawWalletModalProvider } from '@solana/wallet-adapter-react-ui'
 
-const WalletConnectionProvider = dynamic(
-  async () => {
-    const mod = await import('@solana/wallet-adapter-react')
+const ConnectionProvider = RawConnectionProvider as unknown as ComponentType<any>
+const WalletProvider = RawWalletProvider as unknown as ComponentType<any>
+const WalletModalProvider = RawWalletModalProvider as unknown as ComponentType<any>
 
-    return function ProviderWrapper(props: any) {
-      const { ConnectionProvider, WalletProvider } = mod
+const RPC_ENDPOINT =
+  process.env.NEXT_PUBLIC_RPC_URL || 'https://api.mainnet-beta.solana.com'
 
-      const wallets = [new PhantomWalletAdapter()]
-      const endpoint =
-        process.env.NEXT_PUBLIC_RPC_URL ||
-        'https://api.mainnet-beta.solana.com'
-
-      return (
-        <ConnectionProvider endpoint={endpoint}>
-          <WalletProvider wallets={wallets} autoConnect>
-            {props.children}
-          </WalletProvider>
-        </ConnectionProvider>
-      )
-    }
-  },
-  { ssr: false }
-)
-
-const WalletModalProviderDynamic = dynamic(
-  async () => {
-    const mod = await import('@solana/wallet-adapter-react-ui')
-
-    return function ModalWrapper(props: any) {
-      const { WalletModalProvider } = mod
-
-      return (
-        <WalletModalProvider>
-          {props.children}
-        </WalletModalProvider>
-      )
-    }
-  },
-  { ssr: false }
-)
-
-export function SolanaWalletProvider({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  useMemo(() => [new PhantomWalletAdapter()], [])
+export function SolanaWalletProvider({ children }: { children: ReactNode }) {
+  const wallets = useMemo(() => [new PhantomWalletAdapter()], [])
 
   return (
-    <WalletConnectionProvider>
-      <WalletModalProviderDynamic>
-        {children}
-      </WalletModalProviderDynamic>
-    </WalletConnectionProvider>
+    <ConnectionProvider endpoint={RPC_ENDPOINT}>
+      <WalletProvider wallets={wallets} autoConnect>
+        <WalletModalProvider>{children}</WalletModalProvider>
+      </WalletProvider>
+    </ConnectionProvider>
   )
 }
